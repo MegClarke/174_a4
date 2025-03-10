@@ -1,9 +1,14 @@
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 const scene = new THREE.Scene();
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+const camera = new THREE.PerspectiveCamera(
+  60,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  100
+);
 camera.position.set(0, 0, -8);
 
 const renderer = new THREE.WebGLRenderer();
@@ -14,10 +19,9 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.target.set(0, 0, 0);
 
-
 class Texture_Rotate {
-    vertexShader() {
-        return `
+  vertexShader() {
+    return `
         uniform sampler2D uTexture;
         varying vec2 vUv;
         varying vec3 vPosition;
@@ -27,10 +31,10 @@ class Texture_Rotate {
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
         }
         `;
-    }
+  }
 
-    fragmentShader() {
-        return `
+  fragmentShader() {
+    return `
         uniform sampler2D uTexture;
         uniform float animation_time;
         varying vec2 vUv;
@@ -65,13 +69,12 @@ class Texture_Rotate {
 
         }
         `;
-    }
+  }
 }
 
-
 class Texture_Scroll_X {
-    vertexShader() {
-        return `
+  vertexShader() {
+    return `
         uniform sampler2D uTexture;
         varying vec2 vUv;
         varying vec3 vPosition;
@@ -81,10 +84,10 @@ class Texture_Scroll_X {
             gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
         }
         `;
-    }
+  }
 
-    fragmentShader() {
-        return `
+  fragmentShader() {
+    return `
         uniform sampler2D uTexture;
         uniform float animation_time;
         varying vec2 vUv;
@@ -128,95 +131,104 @@ class Texture_Scroll_X {
             gl_FragColor = tex_color;
         }
         `;
-    }
+  }
 }
 
 let animation_time = 0.0;
 
 const cube1_geometry = new THREE.BoxGeometry(2, 2, 2);
 
-// TODO: 1.a Load texture map 
-const cube1_texture = new THREE.TextureLoader().load('assets/stars.png');
+// TODO: 1.a Load texture map
+const cube1_texture = new THREE.TextureLoader().load("assets/stars.png");
 
 // TODO: 1.c Apply Texture Filtering Techniques to Cube 1
 // Nearest Neighbor Texture Filtering
 cube1_texture.minFilter = THREE.NearestFilter;
 cube1_texture.magFilter = THREE.NearestFilter;
 
-
 // TODO: 2.a Enable texture repeat wrapping for Cube 1
 
 const cube1_uniforms = {
-    uTexture: { value: cube1_texture },
-    animation_time: { value: animation_time }
+  uTexture: { value: cube1_texture },
+  animation_time: { value: animation_time },
 };
 const cube1_shader = new Texture_Rotate();
 const cube1_material = new THREE.ShaderMaterial({
-    uniforms: cube1_uniforms,
-    vertexShader: cube1_shader.vertexShader(),
-    fragmentShader: cube1_shader.fragmentShader(),
+  uniforms: cube1_uniforms,
+  vertexShader: cube1_shader.vertexShader(),
+  fragmentShader: cube1_shader.fragmentShader(),
 });
 
 const cube1_mesh = new THREE.Mesh(cube1_geometry, cube1_material);
-cube1_mesh.position.set(2, 0, 0)
+cube1_mesh.position.set(2, 0, 0);
 scene.add(cube1_mesh);
 
 const cube2_geometry = new THREE.BoxGeometry(2, 2, 2);
 
-// TODO: 1.a Load texture map 
-const cube2_texture = new THREE.TextureLoader().load('assets/earth.gif');
+// TODO: 1.a Load texture map
+const cube2_texture = new THREE.TextureLoader().load("assets/earth.gif");
 
 // TODO: 1.c Apply Texture Filtering Techniques to Cube 2
 // Linear Mipmapping Texture Filtering
-// e.g. 
+// e.g.
 cube2_texture.minFilter = THREE.LinearMipmapLinearFilter;
-
 
 // TODO: 2.a Enable texture repeat wrapping for Cube 2
 cube2_texture.wrapS = THREE.RepeatWrapping;
 cube2_texture.wrapT = THREE.RepeatWrapping;
 
-
 const cube2_uniforms = {
-    uTexture: { value: cube2_texture },
-    animation_time: { value: animation_time }
+  uTexture: { value: cube2_texture },
+  animation_time: { value: animation_time },
 };
 const cube2_shader = new Texture_Scroll_X();
 const cube2_material = new THREE.ShaderMaterial({
-    uniforms: cube2_uniforms,
-    vertexShader: cube2_shader.vertexShader(),
-    fragmentShader: cube2_shader.fragmentShader(),
+  uniforms: cube2_uniforms,
+  vertexShader: cube2_shader.vertexShader(),
+  fragmentShader: cube2_shader.fragmentShader(),
 });
 
 const cube2_mesh = new THREE.Mesh(cube2_geometry, cube2_material);
-cube2_mesh.position.set(-2, 0, 0)
+cube2_mesh.position.set(-2, 0, 0);
 scene.add(cube2_mesh);
 
 const clock = new THREE.Clock();
+const clock2 = new THREE.Clock();
+let isRotating = false;
 
 function animate() {
-    controls.update();
+  controls.update();
 
-    // TODO: 2.b&2.c Update uniform values
-    cube1_uniforms.animation_time.value = clock.getElapsedTime();
-    cube2_uniforms.animation_time.value = clock.getElapsedTime();
+  // TODO: 2.b&2.c Update uniform values
+  cube1_uniforms.animation_time.value = clock.getElapsedTime();
+  cube2_uniforms.animation_time.value = clock.getElapsedTime();
 
+  // TODO: 2.e Rotate the cubes if the key 'c' is pressed to start the animation
+  // Cube #1 should rotate around its own X-axis at a rate of 15 rpm.
+  // Cube #2 should rotate around its own Y-axis at a rate of 40 rpm.
+  if (isRotating) {
+    let deltaTime = clock2.getDelta();
+    cube1_mesh.rotation.x -= (2 * Math.PI * 15 / 60) * deltaTime;
+    cube2_mesh.rotation.y += (2 * Math.PI * 40 / 60) * deltaTime;
+  }
 
-    // TODO: 2.e Rotate the cubes if the key 'c' is pressed to start the animation
-    // Cube #1 should rotate around its own X-axis at a rate of 15 rpm.
-    // Cube #2 should rotate around its own Y-axis at a rate of 40 rpm
-
-
-    renderer.render(scene, camera);
+  renderer.render(scene, camera);
 }
 
 renderer.setAnimationLoop(animate);
 
 // TODO: 2.e Keyboard Event Listener
 // Press 'c' to start and stop the rotating both cubes
-window.addEventListener('keydown', onKeyPress);
+window.addEventListener("keydown", onKeyPress);
 function onKeyPress(event) {
-    switch (event.key) {
-        // ...
-    }
+  switch (event.key) {
+    case "c":
+      isRotating = !isRotating;
+      if (isRotating) {
+        clock2.start();
+      } else {
+        clock2.stop();
+      }
+      break;
+  }
 }
